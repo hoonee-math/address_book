@@ -43,6 +43,9 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSubmit }) => {
       <input
         type="date" name="birthday" value={formData.birthday || ''}
         onChange={e => setFormData({...formData, birthday: e.target.value})}
+        min="1900-01-01"  //사용자가 선택할 수 있는 연도 범위가 1900년부터 2099년까지로 제한됩니다
+        max="2099-12-31"
+        className="w-full p-2 border rounded"
       />
       <input
         type="text" name="company" value={formData.company || ''}
