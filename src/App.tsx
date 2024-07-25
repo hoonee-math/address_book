@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Plus, List, LogOut } from 'lucide-react';
-import { Contact, Page } from './types';
+import { Contact, Page, SortOption } from './types'; //정렬을 위해 SortOption 변수 추가
 import ContactForm from './components/ContactForm'; //ContactForm은 연락처 추가/수정 폼을 담당하는 컴포넌트입니다.
 import ContactList from './components/ContactList'; //ContactList는 연락처 목록을 표시하는 컴포넌트입니다.
 import SearchBar from './components/SearchBar'; // 주소록 검색 기능을 구현하기 위해 SearchBar.tsx 파일 추가 후 import
@@ -22,6 +22,8 @@ const AddressBook = () => {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [searchTerm, setSearchTerm] = useState(''); // 주소록 검색 기능을 구현하기 위해 SearchBar.tsx 파일 추가 후 import
+  const [sortOption, setSortOption] = useState<SortOption>(SortOption.NameAsc); // 정렬을 위해 추가
+  const [selectedGroup, setSelectedGroup] = useState<string>('모든 그룹'); // 그룹화를 위해 추가
 
   // 연락처 변경 시 localStorage에 저장
   useEffect(() => {
@@ -71,6 +73,24 @@ const AddressBook = () => {
     (contact.email && contact.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // 정렬된 연락처 계산
+  const sortedContacts = [...filteredContacts].sort((a, b) => {
+    switch (sortOption) {
+      case SortOption.NameAsc:
+        return a.name.localeCompare(b.name);
+      case SortOption.NameDesc:
+        return b.name.localeCompare(a.name);
+      case SortOption.DateAdded:
+        return b.id - a.id;  // ID가 큰 순서대로 (최근에 추가된 순)
+      default:
+        return 0;
+    }
+  });
+  // 그룹 필터링 적용
+  const groupFilteredContacts = selectedGroup === '모든 그룹' 
+  ? sortedContacts 
+  : sortedContacts.filter(contact => contact.group === selectedGroup);
+
   // 컴포넌트 렌더링
   return (
     <div className="address-book">
@@ -90,14 +110,37 @@ const AddressBook = () => {
               setCurrentPage={setCurrentPage}
             />
           )} */}
-          {/* 현재 페이지에 따른 컴포넌트 렌더링 -검색 기능 추가를 위해 코드 수정*/}
+          {/* 현재 페이지에 따른 컴포넌트 렌더링 -검색, 정렬 기능을 추가를 위해 코드 수정*/}
           {currentPage === Page.List && (
             <>
               {/* 검색 바 추가 */}
               <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-              {/* 필터링된 연락처 목록으로 변경 */}
+              {/* 정렬 옵션 선택 */}
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as SortOption)}
+                className="mb-4 p-2 border rounded"
+              >
+                {Object.values(SortOption).map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+
+              {/* 그룹 필터 선택 */}
+              <select
+                value={selectedGroup}
+                onChange={(e) => setSelectedGroup(e.target.value)}
+                className="mb-4 ml-2 p-2 border rounded"
+              >
+                <option value="모든 그룹">모든 그룹</option>
+                <option value="가족">가족</option>
+                <option value="친구">친구</option>
+                <option value="직장">직장</option>
+                <option value="기타">기타</option>
+              </select>
+              {/* 필터링, 정렬, 그룹화된 연락처 목록 */}
               <ContactList 
-                contacts={filteredContacts}
+                contacts={groupFilteredContacts} // 그룹화를 추가하기 위해 filteredContacts > groupFilteredContacts 로 변경
                 setSelectedContact={setSelectedContact}
                 setCurrentPage={setCurrentPage}
               />
