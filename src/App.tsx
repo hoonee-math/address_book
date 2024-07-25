@@ -2,13 +2,16 @@
 // 확장자: .tsx (TypeScript React)
 // 기능: 주소록 애플리케이션의 메인 컴포넌트
 // 연결: types.ts, ContactForm.tsx, ContactList.tsx, App.css를 import하여 사용
+// xlsx 파일을 이용해 다운로드 및 업로드를 위해서 라이브러리 설치 npm install xlsx file-saver
 
 import React, { useState, useEffect } from 'react';
-import { X, Plus, List, LogOut } from 'lucide-react';
+import { X, Plus, List, LogOut, Download, Upload } from 'lucide-react'; // 데이터 백업 및 복원 기능을 구현하기 위해 Download, Upload 변수 추가
 import { Contact, Page, SortOption } from './types'; //정렬을 위해 SortOption 변수 추가
 import ContactForm from './components/ContactForm'; //ContactForm은 연락처 추가/수정 폼을 담당하는 컴포넌트입니다.
 import ContactList from './components/ContactList'; //ContactList는 연락처 목록을 표시하는 컴포넌트입니다.
 import SearchBar from './components/SearchBar'; // 주소록 검색 기능을 구현하기 위해 SearchBar.tsx 파일 추가 후 import
+import * as XLSX from 'xlsx'; // 데이터 백업 및 복원 기능을 구현하기 위해 추가
+import { saveAs } from 'file-saver';  // 데이터 백업 및 복원 기능을 구현하기 위해, file-saver의 타입 정의를 설치 > npm install --save-dev @types/file-saver
 import './App.css';
 
 const AddressBook = () => {
@@ -24,6 +27,32 @@ const AddressBook = () => {
   const [searchTerm, setSearchTerm] = useState(''); // 주소록 검색 기능을 구현하기 위해 SearchBar.tsx 파일 추가 후 import
   const [sortOption, setSortOption] = useState<SortOption>(SortOption.NameAsc); // 정렬을 위해 추가
   const [selectedGroup, setSelectedGroup] = useState<string>('모든 그룹'); // 그룹화를 위해 추가
+
+  // 데이터 내보내기 함수
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(contacts);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Contacts");
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(data, 'contacts.xlsx');
+  };
+
+   // 데이터 가져오기 함수
+   const importFromExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as Contact[];
+        setContacts(prevContacts => [...prevContacts, ...jsonData]);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
 
   // 연락처 변경 시 localStorage에 저장
   useEffect(() => {
@@ -102,14 +131,20 @@ const AddressBook = () => {
             <button onClick={() => setCurrentPage(Page.List)}><List size={20} /></button>
             <button onClick={() => { setSelectedContact(null); setCurrentPage(Page.Add); }}><Plus size={20} /></button>
             <button onClick={logout}><LogOut size={20} /></button>
+            
+            {/* 데이터 백업 및 복원 기능을 구현하기 위해 버튼 추가*/}
+            <button onClick={exportToExcel} className="p-2 bg-green-500 text-white rounded">
+              <Download size={20} />
+            </button>
+            <label className="p-2 bg-blue-500 text-white rounded cursor-pointer">
+              <Upload size={20} />
+              <input type="file" onChange={importFromExcel} className="hidden" accept=".xlsx" />
+            </label>
+
           </div>
-          {/* {currentPage === Page.List && (
-            <ContactList 
-              contacts={contacts}
-              setSelectedContact={setSelectedContact}
-              setCurrentPage={setCurrentPage}
-            />
-          )} */}
+
+
+
           {/* 현재 페이지에 따른 컴포넌트 렌더링 -검색, 정렬 기능을 추가를 위해 코드 수정*/}
           {currentPage === Page.List && (
             <>
