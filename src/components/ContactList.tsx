@@ -18,18 +18,21 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, setSelectedContact,
   // 컴포넌트 렌더링
   return (
     <div className="contact-list">
-      {contacts.map(contact => (
-        <div key={contact.id} className="contact-item">
-          {/* 연락처 정보 표시 및 상세 페이지로 이동 */}
-          <span onClick={() => { setSelectedContact(contact); setCurrentPage(Page.Detail); }}>
-            {contact.name} - {contact.phone}
-          </span>
-          {/* 수정 버튼 */}
-          <button onClick={() => { setSelectedContact(contact); setCurrentPage(Page.Edit); }}>
-            <Edit size={16} />
-          </button>
-        </div>
-      ))}
+      {contacts.length === 0 ? ( //검색 기능 추가 하면서 추가 결과가 없을 경우 적절한 메시지가 표시됩니다.
+        <p>검색 결과가 없습니다.</p>
+      ) : (
+        (contacts.map(contact => (
+          <div key={contact.id} className="contact-item">
+            {/* 연락처 정보 표시 및 상세 페이지로 이동 */}
+            <span onClick={() => { setSelectedContact(contact); setCurrentPage(Page.Detail); }}>
+              {contact.name} - {contact.phone}
+            </span>
+            {/* 수정 버튼 */}
+            <button onClick={() => { setSelectedContact(contact); setCurrentPage(Page.Edit); }}>
+              <Edit size={16} />
+            </button>
+          </div>
+        ))))}
     </div>
   );
 };

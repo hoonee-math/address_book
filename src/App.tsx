@@ -6,8 +6,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, List, LogOut } from 'lucide-react';
 import { Contact, Page } from './types';
-import ContactForm from './components/ContactForm';
-import ContactList from './components/ContactList';
+import ContactForm from './components/ContactForm'; //ContactForm은 연락처 추가/수정 폼을 담당하는 컴포넌트입니다.
+import ContactList from './components/ContactList'; //ContactList는 연락처 목록을 표시하는 컴포넌트입니다.
+import SearchBar from './components/SearchBar'; // 주소록 검색 기능을 구현하기 위해 SearchBar.tsx 파일 추가 후 import
 import './App.css';
 
 const AddressBook = () => {
@@ -20,6 +21,7 @@ const AddressBook = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Login);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // 주소록 검색 기능을 구현하기 위해 SearchBar.tsx 파일 추가 후 import
 
   // 연락처 변경 시 localStorage에 저장
   useEffect(() => {
@@ -62,6 +64,13 @@ const AddressBook = () => {
     setCurrentPage(Page.List);
   };
 
+  // 검색된 연락처 필터링
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.phone.includes(searchTerm) ||
+    (contact.email && contact.email.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   // 컴포넌트 렌더링
   return (
     <div className="address-book">
@@ -74,14 +83,27 @@ const AddressBook = () => {
             <button onClick={() => { setSelectedContact(null); setCurrentPage(Page.Add); }}><Plus size={20} /></button>
             <button onClick={logout}><LogOut size={20} /></button>
           </div>
-          {/* 현재 페이지에 따른 컴포넌트 렌더링 */}
-          {currentPage === Page.List && (
+          {/* {currentPage === Page.List && (
             <ContactList 
               contacts={contacts}
               setSelectedContact={setSelectedContact}
               setCurrentPage={setCurrentPage}
             />
+          )} */}
+          {/* 현재 페이지에 따른 컴포넌트 렌더링 -검색 기능 추가를 위해 코드 수정*/}
+          {currentPage === Page.List && (
+            <>
+              {/* 검색 바 추가 */}
+              <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+              {/* 필터링된 연락처 목록으로 변경 */}
+              <ContactList 
+                contacts={filteredContacts}
+                setSelectedContact={setSelectedContact}
+                setCurrentPage={setCurrentPage}
+              />
+            </>
           )}
+        
           {currentPage === Page.Add && <ContactForm contact={null} onSubmit={addContact} />}
           {currentPage === Page.Edit && selectedContact && <ContactForm contact={selectedContact} onSubmit={updateContact} />}
           {currentPage === Page.Detail && selectedContact && (
