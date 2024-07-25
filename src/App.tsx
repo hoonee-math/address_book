@@ -13,122 +13,49 @@ type Contact = {
 
 enum Page { List, Add, Edit, Detail, Login }
 
-const API_URL = "https://your-backend-api.com"; // 실제 백엔드 API 주소로 변경해야 합니다.
-
 const AddressBook = () => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>(() => {
+    const savedContacts = localStorage.getItem('contacts');
+    return savedContacts ? JSON.parse(savedContacts) : [];
+  });
   const [currentPage, setCurrentPage] = useState<Page>(Page.Login);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      fetchContacts();
-    }
-  }, [token]);
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  const handleApiError = (error: any) => {
-    console.error('API Error:', error);
-    setError('An error occurred. Please try again.');
-    setIsLoading(false);
-  };
-
-  const fetchContacts = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/contacts`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Failed to fetch contacts');
-      const data = await response.json();
-      setContacts(data);
-    } catch (error) {
-      handleApiError(error);
-    }
-    setIsLoading(false);
-  };
-
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (!response.ok) throw new Error('Login failed');
-      const data = await response.json();
-      setToken(data.token);
-      localStorage.setItem('token', data.token);
+  const login = (email: string, password: string) => {
+    // 간단한 로그인 검증 (실제 환경에서는 이렇게 하면 안 됩니다!)
+    if (email === "test@example.com" && password === "password") {
+      setIsAuthenticated(true);
       setCurrentPage(Page.List);
-    } catch (error) {
-      handleApiError(error);
+    } else {
+      alert("Invalid credentials");
     }
-    setIsLoading(false);
   };
 
   const logout = () => {
-    setToken(null);
-    localStorage.removeItem('token');
+    setIsAuthenticated(false);
     setCurrentPage(Page.Login);
   };
 
-  const addContact = async (newContact: Omit<Contact, 'id'>) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/contacts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newContact)
-      });
-      if (!response.ok) throw new Error('Failed to add contact');
-      await fetchContacts();
-      setCurrentPage(Page.List);
-    } catch (error) {
-      handleApiError(error);
-    }
-    setIsLoading(false);
+  const addContact = (newContact: Omit<Contact, 'id'>) => {
+    setContacts(prev => [...prev, { ...newContact, id: Date.now() }]);
+    setCurrentPage(Page.List);
   };
 
-  const updateContact = async (updatedContact: Contact) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/contacts/${updatedContact.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updatedContact)
-      });
-      if (!response.ok) throw new Error('Failed to update contact');
-      await fetchContacts();
-      setCurrentPage(Page.List);
-    } catch (error) {
-      handleApiError(error);
-    }
-    setIsLoading(false);
+  const updateContact = (updatedContact: Contact) => {
+    setContacts(prev => prev.map(contact => 
+      contact.id === updatedContact.id ? updatedContact : contact
+    ));
+    setCurrentPage(Page.List);
   };
 
-  const deleteContact = async (id: number) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/contacts/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Failed to delete contact');
-      await fetchContacts();
-      setCurrentPage(Page.List);
-    } catch (error) {
-      handleApiError(error);
-    }
-    setIsLoading(false);
+  const deleteContact = (id: number) => {
+    setContacts(prev => prev.filter(contact => contact.id !== id));
+    setCurrentPage(Page.List);
   };
 
   const ContactForm = ({ contact, onSubmit }: { contact: Contact | null, onSubmit: (contact: Contact) => void }) => {
@@ -171,7 +98,7 @@ const AddressBook = () => {
           onChange={e => setFormData({...formData, memo: e.target.value})}
           placeholder="메모" className="w-full p-2 border rounded"
         />
-        <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded" disabled={isLoading}>
+        <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">
           {contact ? '수정' : '추가'}
         </button>
       </form>
@@ -181,9 +108,7 @@ const AddressBook = () => {
   return (
     <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
       <h1 className="text-2xl font-bold mb-6 text-center">주소록</h1>
-      {error && <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>}
-      {isLoading && <div className="mb-4 p-2 bg-blue-100 text-blue-700 rounded">로딩 중...</div>}
-      {token ? (
+      {isAuthenticated ? (
         <>
           <div className="flex justify-between mb-4">
             <button onClick={() => setCurrentPage(Page.List)} className="p-2 bg-gray-200 rounded"><List size={20} /></button>
@@ -223,7 +148,7 @@ const AddressBook = () => {
         <form onSubmit={(e) => { e.preventDefault(); login(e.currentTarget.email.value, e.currentTarget.password.value); }} className="space-y-4">
           <input type="email" name="email" placeholder="이메일" required className="w-full p-2 border rounded" />
           <input type="password" name="password" placeholder="비밀번호" required className="w-full p-2 border rounded" />
-          <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded" disabled={isLoading}>로그인</button>
+          <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">로그인</button>
         </form>
       )}
     </div>
