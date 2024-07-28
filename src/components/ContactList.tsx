@@ -15,8 +15,8 @@ type ContactListProps = {
 };
 
 const ContactList: React.FC<ContactListProps> = ({ contacts, setSelectedContact, setCurrentPage }) => {
-  // 현재 마우스가 올라가 있는 연락처의 ID를 저장하는 상태
-  const [hoveredId, setHoveredId] = useState<number | null>(null); 
+  // 수정: hoveredId의 타입을 number | string | null로 변경
+  const [hoveredId, setHoveredId] = useState<number | string | null>(null);
  
   // 컴포넌트 렌더링
   return (
@@ -27,11 +27,12 @@ const ContactList: React.FC<ContactListProps> = ({ contacts, setSelectedContact,
         // 연락처 목록 렌더링
         (contacts.map(contact => (
           <div 
-            key={contact.id} 
+            // 수정: key prop을 문자열로 변환하여 사용
+            key={String(contact.id)}
             className="contact-item flex justify-between items-center p-2 cursor-pointer"
             // 인라인 스타일을 사용하여 호버 효과 구현
             style={{
-              backgroundColor: hoveredId === contact.id ? '#f3f4f6' : 'transparent',
+              backgroundColor: hoveredId === contact.id ? '#777777' : 'transparent',
               transition: 'background-color 0.15s ease-in-out'
             }}
             // 마우스 이벤트 핸들러로 호버 상태 관리

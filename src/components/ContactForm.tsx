@@ -15,11 +15,24 @@ type ContactFormProps = {
 const ContactForm: React.FC<ContactFormProps> = ({ contact, onSubmit }) => {
   // 폼 데이터 상태 관리
   const [formData, setFormData] = useState(contact || { id: 0, name: '', phone: '', group: '기타' }); // 그룹화를 위해 formData의 초기값에 'group' 필드 추가
+  // hover 효과를 위해 상태 추가
+  const [isHovered, setIsHovered] = useState(false);
+
 
   // 폼 제출 핸들러
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData as Contact);
+  };
+
+  const buttonStyle = { // 호버 효과를 위해 버튼 스타일 상태 추가
+    width: '100%',
+    padding: '0.5rem',
+    backgroundColor: isHovered ? '#2563eb' : '#3b82f6', // 호버 시 더 진한 파란색
+    color: 'white',
+    borderRadius: '0.25rem',
+    transition: 'background-color 0.15s ease-in-out',
+    cursor: 'pointer',
   };
 
   // 컴포넌트 렌더링
@@ -72,22 +85,14 @@ const ContactForm: React.FC<ContactFormProps> = ({ contact, onSubmit }) => {
       </select>
 
 
-      {/* 버튼 타입 수정 
-          버튼 타입을 submit으로 지정
-          "submit" 타입의 버튼은 폼 내에서 클릭되었을 때 해당 폼의 데이터를 제출(submit)하는 역할을 합니다.
-          이전에 사용되었을 수 있는 type="button"과는 다릅니다. "button" 타입은 단순히 클릭 이벤트만 발생시키고 폼 제출을 하지 않습니다.
-      */}
-      {/*<button type="submit">*/}
-      {/* className="w-full p-2 bg-blue-500 text-white rounded"
-          
-          이 부분은 Tailwind CSS 클래스를 사용하여 버튼의 스타일을 지정합니다.
-          w-full: 버튼의 너비를 부모 요소의 전체 너비로 설정합니다.
-          p-2: 버튼에 패딩(여백)을 추가합니다.
-          bg-blue-500: 버튼의 배경색을 파란색으로 설정합니다.
-          text-white: 버튼의 텍스트 색상을 흰색으로 설정합니다.
-          rounded: 버튼의 모서리를 둥글게 만듭니다.
-      */}     
-      <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">
+      {/* 버튼 타입 수정     
+      <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">*/} 
+      <button
+        type="submit"
+        style={buttonStyle}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {contact ? '수정' : '추가'}
       </button>
     </form>

@@ -48,7 +48,19 @@ const AddressBook = () => {
         const workbook = XLSX.read(data, { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as Contact[];
-        setContacts(prevContacts => [...prevContacts, ...jsonData]);
+        
+        // 새로운 연락처를 기존 연락처에 추가
+        setContacts(prevContacts => {
+          const newContacts = jsonData.map(contact => ({
+            ...contact,
+            id: Date.now() + Math.random(), // 고유 ID 생성
+            group: contact.group || '미지정' // 그룹이 없는 경우 '미지정'으로 설정
+          }));
+          return [...prevContacts, ...newContacts];
+        });
+
+        // 파일 입력 초기화
+        event.target.value = '';
       };
       reader.readAsArrayBuffer(file);
     }
@@ -120,6 +132,19 @@ const AddressBook = () => {
   ? sortedContacts 
   : sortedContacts.filter(contact => contact.group === selectedGroup);
 
+  // 호버 상태를 관리하기 위한 새로운 상태
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+
+  // 버튼 스타일을 생성하는 함수
+  const getButtonStyle = (baseColor: string, hoverColor: string, buttonName: string) => ({
+    backgroundColor: hoveredButton === buttonName ? hoverColor : baseColor,
+    transition: 'background-color 0.15s ease-in-out',
+    padding: '0.5rem',
+    borderRadius: '0.25rem',
+    color: 'white',
+    cursor: 'pointer'
+  });
+  
   // 컴포넌트 렌더링
   return (
     <div className="address-book">
@@ -128,19 +153,56 @@ const AddressBook = () => {
         <>
           {/* 네비게이션 버튼 */}
           <div className="nav-buttons">
-            <button onClick={() => setCurrentPage(Page.List)}><List size={20} /></button>
-            <button onClick={() => { setSelectedContact(null); setCurrentPage(Page.Add); }}><Plus size={20} /></button>
-            <button onClick={logout}><LogOut size={20} /></button>
+            <button
+              onClick={() => setCurrentPage(Page.List)}
+              style={getButtonStyle('#3b82f6', '#444444', 'list')}
+              onMouseEnter={() => setHoveredButton('list')}
+              onMouseLeave={() => setHoveredButton(null)}
+            >
+              <List size={20} />
+            </button>
+            <button
+              onClick={() => { setSelectedContact(null); setCurrentPage(Page.Add); }}
+              style={getButtonStyle('#10b981', '#444444', 'add')}
+              onMouseEnter={() => setHoveredButton('add')}
+              onMouseLeave={() => setHoveredButton(null)}
+            >
+              <Plus size={20} />
+            </button>
+            <button
+              onClick={logout}
+              style={getButtonStyle('#ef4444', '#444444', 'logout')}
+              onMouseEnter={() => setHoveredButton('logout')}
+              onMouseLeave={() => setHoveredButton(null)}
+            >
+              <LogOut size={20} />
+            </button>
             
-            {/* 데이터 백업 및 복원 기능을 구현하기 위해 버튼 추가*/}
-            <button onClick={exportToExcel} className="p-2 bg-green-500 text-white rounded">
+            {/* 데이터 백업 및 복원 기능을 구현하기 위해 버튼 추가 */}
+            <button
+              onClick={exportToExcel}
+              style={getButtonStyle('#22c55e', '#444444', 'export')}
+              onMouseEnter={() => setHoveredButton('export')}
+              onMouseLeave={() => setHoveredButton(null)}
+            >
               <Download size={20} />
             </button>
+            {/*
             <label className="p-2 bg-blue-500 text-white rounded cursor-pointer">
               <Upload size={20} />
               <input type="file" onChange={importFromExcel} className="hidden" accept=".xlsx" />
             </label>
-
+            //이게 아래랑 같은 업로드 버튼임
+            */}
+            <label
+              style={getButtonStyle('#3b82f6', '#444444', 'import')}
+              onMouseEnter={() => setHoveredButton('import')}
+              onMouseLeave={() => setHoveredButton(null)}
+            >
+              <Upload size={20} />
+              <input type="file" onChange={importFromExcel} className="hidden" accept=".xlsx" />
+            </label>
+            
           </div>
 
 
